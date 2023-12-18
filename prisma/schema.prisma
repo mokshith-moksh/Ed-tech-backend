@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String            @id @default(uuid())
+  firstName         String
+  lastName          String?
+  email             String            @unique
+  password          String
+  accountType       AccountType       @default(Student)
+  active            Boolean           @default(true)
+  approved          Boolean           @default(true)
+  additionalDetails Profile?
+  createdcourses    Course[]          @relation("instructor")
+  enrolledCourse    Course[]
+  profileImageUrl   String?
+  created_at        DateTime          @default(now())
+  updated_at        DateTime          @unique
+  RatingAndReview   RatingAndReview[]
+  courseProgress    courseProgress[]
+  Payment           Payment[]
+}
+
+enum AccountType {
+  Admin
+  Student
+  Instructor
+}
+
+enum Gender {
+  Boy
+  Girl
+  Other
+  null
+}
+
+model Profile {
+  profileuser   User     @relation(fields: [profileId], references: [id],onDelete: Cascade)
+  profileId     String   @id
+  gender        Gender
+  dateOfBirth   DateTime
+  about         String
+  contactNumber Int
+}
+
+model Course {
+  id                String            @id @default(uuid())
+  instructorId      String
+  instructorName    User              @relation("instructor", fields: [instructorId], references: [id],onDelete: Cascade)
+  courseName        String
+  courseDescription String
+  whatYouWillLearn  String            
+  courseContent     Section[]       
+  ratingAndReviews  RatingAndReview[]
+  price             Int
+  thumbnail         String
+  tag               String[]
+  category          Category          @relation(fields: [categoryId], references: [id],onDelete: Cascade)
+  studentsEnroled   User[]
+  status            String
+  courseProgress    courseProgress[]
+  categoryId        String
+  Payment           Payment[]
+  sold              Int               @default(0)
+}
+
+model Section {
+  id          String       @id @default(uuid())
+  course      Course       @relation(fields: [courseId], references: [id],onDelete: Cascade)
+  sectionName String
+  subSection  SubSection[]
+  courseId    String
+}
+
+model SubSection {
+  id               String          @id @default(uuid())
+  sectionId        String
+  subsection       Section         @relation(fields: [sectionId], references: [id],onDelete: Cascade)
+  title            String
+  timeDuration     String
+  description      String
+  videoUrl         String
+  courseProgress   courseProgress? @relation(fields: [courseProgressId], references: [id],onDelete: Cascade)
+  courseProgressId String?
+}
+
+model RatingAndReview {
+  userId   String @id
+  user     User   @relation(fields: [userId], references: [id],onDelete: Cascade)
+  rating   Int
+  review   String
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id],onDelete: Cascade)
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  courses     Course[]
+}
+
+model courseProgress {
+  id                String       @id @default(uuid())
+  coursesId         String
+  courseName        Course       @relation(fields: [coursesId], references: [id],onDelete: Cascade)
+  user              User         @relation(fields: [userId], references: [id],onDelete: Cascade)
+  userId            String
+  completedVideos   SubSection[]
+  completedVideosId String[]
+}
+
+model Payment {
+  id            String  @id @default(uuid())
+  user          User    @relation(fields: [userId], references: [id],onDelete: Cascade)
+  userId        String
+  coursesId     String
+  courseName    Course  @relation(fields: [coursesId], references: [id],onDelete: Cascade)
+  transactionID String?
+}
